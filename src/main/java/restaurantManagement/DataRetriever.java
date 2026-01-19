@@ -1,6 +1,6 @@
-package com.restaurantManagement;
+package restaurantManagement;
 
-import com.config.DBConnection;
+import config.DBConnection;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
