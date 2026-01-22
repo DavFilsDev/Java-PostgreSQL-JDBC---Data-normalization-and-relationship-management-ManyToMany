@@ -28,3 +28,7 @@ UPDATE dish SET price = 8000.00 WHERE id = 4 AND name = 'Gâteau au chocolat';
 
 --rename the column price into selling_price in the dish table
 ALTER TABLE dish RENAME COLUMN price TO selling_price;
+
+-- remove the constraint of the price column into dish to add a new constraint to make a default value NULL
+ALTER TABLE dish
+    DROP CONSTRAINT IF EXISTS dish_price_check;
