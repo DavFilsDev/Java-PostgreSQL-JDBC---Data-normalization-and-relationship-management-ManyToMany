@@ -1,6 +1,7 @@
 package restaurantManagement;
 
 import models.Dish;
+import models.DishTypeEnum;
 
 public class Main {
     public static void main(String[] args) {

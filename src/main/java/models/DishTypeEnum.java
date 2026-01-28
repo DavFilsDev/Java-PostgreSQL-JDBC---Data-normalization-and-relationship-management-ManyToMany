@@ -1,4 +1,4 @@
-package restaurantManagement;
+package models;
 
 public enum DishTypeEnum {
     START,
