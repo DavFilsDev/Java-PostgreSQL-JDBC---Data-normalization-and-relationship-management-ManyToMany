@@ -4,6 +4,7 @@ import db.DBConnection;
 import models.CategoryEnum;
 import models.Dish;
 import models.DishTypeEnum;
+import models.Ingredient;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
