@@ -10,7 +10,7 @@ public class DBConnection {
     private final Dotenv dotenv = Dotenv.configure().ignoreIfMissing().load();
 
     private final String JDBC_URL = dotenv.get("JDBC_URL");
-    private final String USERNAME = dotenv.get("USERNAME");
+    private final String USERNAME = dotenv.get("DB_USER");
     private final String PASSWORD = dotenv.get("PASSWORD");
 
     public Connection getDBConnection() {
