@@ -1,5 +1,7 @@
 package restaurantManagement;
 
+import models.CategoryEnum;
+
 import java.util.Objects;
 
 public class Ingredient {
