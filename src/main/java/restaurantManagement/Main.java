@@ -2,10 +2,11 @@ package restaurantManagement;
 
 import models.Dish;
 import models.DishTypeEnum;
+import services.DataRetriever;
 
 public class Main {
     public static void main(String[] args) {
-        restaurantManagement.DataRetriever dataRetriever = new restaurantManagement.DataRetriever();
+        DataRetriever dataRetriever = new DataRetriever();
 
         System.out.println("=== TEST 1 : Récupération de plats et calcul de marge ===");
         System.out.println();
