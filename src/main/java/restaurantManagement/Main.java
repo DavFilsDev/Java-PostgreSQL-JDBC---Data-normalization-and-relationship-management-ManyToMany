@@ -1,5 +1,7 @@
 package restaurantManagement;
 
+import models.Dish;
+
 public class Main {
     public static void main(String[] args) {
         restaurantManagement.DataRetriever dataRetriever = new restaurantManagement.DataRetriever();

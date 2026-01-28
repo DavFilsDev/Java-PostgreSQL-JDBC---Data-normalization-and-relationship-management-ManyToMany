@@ -2,6 +2,7 @@ package restaurantManagement;
 
 import db.DBConnection;
 import models.CategoryEnum;
+import models.Dish;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
