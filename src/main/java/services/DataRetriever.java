@@ -836,4 +836,32 @@ public class DataRetriever {
             psWithoutId.executeBatch();
         }
     }
+
+
+    public boolean isTableAvailable(int tableId, Instant arrival, Instant departure) {
+        String sql = """
+        SELECT COUNT(*) as overlapping_orders
+        FROM "order" o
+        WHERE o.id_table = ?
+        AND o.arrival_datetime < ?
+        AND o.departure_datetime > ?
+    """;
+
+        Connection connection = dbConnection.getDBConnection();
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, tableId);
+            ps.setTimestamp(2, Timestamp.from(departure));
+            ps.setTimestamp(3, Timestamp.from(arrival));
+
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("overlapping_orders") == 0;
+            }
+            return true;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            dbConnection.close(connection);
+        }
+    }
 }
