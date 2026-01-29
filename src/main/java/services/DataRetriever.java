@@ -864,4 +864,37 @@ public class DataRetriever {
             dbConnection.close(connection);
         }
     }
+
+    public List<Integer> findAvailableTables(Instant arrival, Instant departure) {
+        String sql = """
+        SELECT rt.id
+        FROM restaurant_table rt
+        WHERE NOT EXISTS (
+            SELECT 1 
+            FROM "order" o 
+            WHERE o.id_table = rt.id
+            AND o.arrival_datetime < ?
+            AND o.departure_datetime > ?
+        )
+        ORDER BY rt.number
+    """;
+
+        List<Integer> availableTables = new ArrayList<>();
+        Connection connection = dbConnection.getDBConnection();
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setTimestamp(1, Timestamp.from(departure));
+            ps.setTimestamp(2, Timestamp.from(arrival));
+
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                availableTables.add(rs.getInt("id"));
+            }
+            return availableTables;
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            dbConnection.close(connection);
+        }
+    }
 }
