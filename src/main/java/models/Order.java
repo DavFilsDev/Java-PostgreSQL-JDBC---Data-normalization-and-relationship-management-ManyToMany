@@ -8,12 +8,14 @@ public class Order {
     private final String reference;
     private final Instant creationDateTime;
     private final java.util.List<DishOrder> dishOrders;
+    private final TableOrder tableOrder;
 
-    public Order(int id, String reference, Instant creationDateTime, List<DishOrder> dishOrders) {
+    public Order(int id, String reference, Instant creationDateTime, List<DishOrder> dishOrders, TableOrder tableOrder) {
         this.id = id;
         this.reference = reference;
         this.creationDateTime = creationDateTime;
         this.dishOrders = dishOrders;
+        this.tableOrder = tableOrder;
     }
 
     public int getId() {
@@ -48,5 +50,21 @@ public class Order {
 
     public Double getTotalAmountWithVAT() {
         return getTotalAmountWithoutVAT() * 1.2;
+    }
+
+    public TableOrder getTableOrder() {
+        return tableOrder;
+    }
+
+    public Instant getArrivalDateTime() {
+        return tableOrder != null ? tableOrder.getArrivalDateTime() : null;
+    }
+
+    public Instant getDepartureDateTime() {
+        return tableOrder != null ? tableOrder.getDepartureDateTime() : null;
+    }
+
+    public Table getTable() {
+        return tableOrder != null ? tableOrder.getTable() : null;
     }
 }
