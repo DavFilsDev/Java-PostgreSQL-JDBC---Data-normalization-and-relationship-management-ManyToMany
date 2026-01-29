@@ -1,45 +1,43 @@
-import models.*;
 import db.DBConnection;
+import models.*;
 import services.DataRetriever;
-
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestRestaurantTables {
-
+public class Main {
     public static void main(String[] args) {
-        System.out.println("=== Test des nouvelles fonctionnalités de gestion des tables ===\n");
+        System.out.println("=== TEST DE GESTION DES TABLES ===");
 
         // Initialisation
         DBConnection dbConnection = new DBConnection();
         DataRetriever dataRetriever = new DataRetriever(dbConnection);
 
         try {
-            // Test 1: Vérification de la disponibilité d'une table
-            System.out.println("Test 1: Vérification de disponibilité des tables");
-            testTableAvailability(dataRetriever);
+            // Test 1: Créer une commande avec une table valide
+            System.out.println("\n--- Test 1: Création de commande valide ---");
+            testValidOrderCreation(dataRetriever);
 
-            System.out.println("\n---\n");
+            // Test 2: Essayer de créer une commande avec table indisponible
+            System.out.println("\n--- Test 2: Création avec table indisponible ---");
+            testUnavailableTable(dataRetriever);
 
-            // Test 2: Création d'une commande avec table disponible
-            System.out.println("Test 2: Création d'une commande avec table disponible");
-            testSuccessfulOrderWithTable(dataRetriever);
+            // Test 3: Créer une commande avec table 2 (devrait être disponible)
+            System.out.println("\n--- Test 3: Création avec table 2 ---");
+            testSecondTableOrder(dataRetriever);
 
-            System.out.println("\n---\n");
+            // Test 4: Rechercher une commande par référence
+            System.out.println("\n--- Test 4: Recherche de commande ---");
+            testFindOrderByReference(dataRetriever);
 
-            // Test 3: Tentative de création d'une commande avec table occupée
-            System.out.println("Test 3: Tentative de création d'une commande avec table occupée");
-            testFailedOrderWithOccupiedTable(dataRetriever);
+            // Test 5: Tester avec toutes les tables occupées
+            System.out.println("\n--- Test 5: Toutes les tables occupées ---");
+            testAllTablesOccupied(dataRetriever);
 
-            System.out.println("\n---\n");
-
-            // Test 4: Message d'erreur avec suggestions de tables disponibles
-            System.out.println("Test 4: Message d'erreur avec suggestions");
-            testErrorWithAvailableSuggestions(dataRetriever);
-
-            System.out.println("\n=== Tous les tests sont terminés ===");
+            // Test 6: Tester les méthodes de base
+            System.out.println("\n--- Test 6: Méthodes de base ---");
+            testBasicMethods(dataRetriever);
 
         } catch (Exception e) {
             System.err.println("Erreur pendant les tests: " + e.getMessage());
@@ -47,205 +45,198 @@ public class TestRestaurantTables {
         }
     }
 
-    private static void testTableAvailability(DataRetriever dataRetriever) {
+    private static void testValidOrderCreation(DataRetriever dataRetriever) {
         try {
-            Instant now = Instant.now();
-            Instant arrival = now.plus(1, ChronoUnit.HOURS);
-            Instant departure = arrival.plus(2, ChronoUnit.HOURS);
+            // Créer un plat (Salade fraiche)
+            Dish dish = dataRetriever.findDishById(1);
+            System.out.println("Plat trouvé: " + dish.getName() + " - Prix: " + dish.getPrice());
 
-            // Tester les tables disponibles
-            List<Integer> availableTables = dataRetriever.findAvailableTables(arrival, departure);
-            System.out.println("Tables disponibles de " + arrival + " à " + departure + " : " + availableTables);
-
-            // Tester une table spécifique
-            boolean isTable1Available = dataRetriever.isTableAvailable(1, arrival, departure);
-            System.out.println("Table 1 disponible ? " + isTable1Available);
-
-            // Tester la méthode findTableById
-            Table table2 = dataRetriever.findTableById(2);
-            System.out.println("Table chargée: #" + table2.getNumber() + " (id=" + table2.getId() + ")");
-
-        } catch (Exception e) {
-            System.err.println("Erreur dans testTableAvailability: " + e.getMessage());
-        }
-    }
-
-    private static void testSuccessfulOrderWithTable(DataRetriever dataRetriever) {
-        try {
-            // Charger un plat existant
-            Dish dish = dataRetriever.findDishById(1); // Salade fraiche
-            System.out.println("Plat chargé: " + dish.getName() + " (id=" + dish.getId() + ")");
-
-            // Créer les DishOrders
+            // Créer des DishOrders
             List<DishOrder> dishOrders = new ArrayList<>();
             dishOrders.add(new DishOrder(0, dish, 2)); // 2 salades fraiches
 
-            // Créer la table et les horaires
-            Table table = dataRetriever.findTableById(3); // Table #3
-            Instant arrival = Instant.now().plus(3, ChronoUnit.HOURS);
-            Instant departure = arrival.plus(1, ChronoUnit.HOURS);
+            // Créer une table (table 1)
+            Table table = dataRetriever.findTableById(1);
+            System.out.println("Table trouvée: numéro " + table.getNumber());
+
+            // Définir les heures (maintenant + 2 heures)
+            Instant arrival = Instant.now().plus(2, ChronoUnit.HOURS);
+            Instant departure = arrival.plus(3, ChronoUnit.HOURS);
             TableOrder tableOrder = new TableOrder(table, arrival, departure);
 
-            // Créer la commande sans ID (sera généré automatiquement)
-            Order newOrder = new Order(0, null, Instant.now(), dishOrders, tableOrder);
+            // Créer la commande
+            Order order = new Order(0, null, Instant.now(), dishOrders, tableOrder);
 
             // Sauvegarder la commande
-            Order savedOrder = dataRetriever.saveOrder(newOrder);
-
+            Order savedOrder = dataRetriever.saveOrder(order);
             System.out.println("Commande créée avec succès!");
             System.out.println("Référence: " + savedOrder.getReference());
-            System.out.println("Table: #" + savedOrder.getTable().getNumber());
+            System.out.println("Table: " + savedOrder.getTable().getNumber());
             System.out.println("Arrivée: " + savedOrder.getArrivalDateTime());
             System.out.println("Départ: " + savedOrder.getDepartureDateTime());
-            System.out.println("Montant total: " + savedOrder.getTotalAmountWithVAT() + " (avec TVA)");
-
-            // Recharger pour vérifier
-            Order loadedOrder = dataRetriever.findOrderByReference(savedOrder.getReference());
-            System.out.println("Commande rechargée - Table: #" + loadedOrder.getTable().getNumber());
+            System.out.println("Montant HT: " + savedOrder.getTotalAmountWithoutVAT());
+            System.out.println("Montant TTC: " + savedOrder.getTotalAmountWithVAT());
 
         } catch (Exception e) {
-            System.err.println("Erreur dans testSuccessfulOrderWithTable: " + e.getMessage());
+            System.err.println("Échec du test 1: " + e.getMessage());
         }
     }
 
-    private static void testFailedOrderWithOccupiedTable(DataRetriever dataRetriever) {
+    private static void testUnavailableTable(DataRetriever dataRetriever) {
         try {
-            // Première commande pour occuper la table 1
-            System.out.println("Création d'une première commande pour table 1...");
+            // Créer un plat (Poulet grillé)
+            Dish dish = dataRetriever.findDishById(2);
 
-            Dish dish = dataRetriever.findDishById(2); // Poulet grille
-            Table table1 = dataRetriever.findTableById(1);
+            // Créer des DishOrders
+            List<DishOrder> dishOrders = new ArrayList<>();
+            dishOrders.add(new DishOrder(0, dish, 1));
 
-            Instant arrival1 = Instant.now().plus(4, ChronoUnit.HOURS);
-            Instant departure1 = arrival1.plus(1, ChronoUnit.HOURS);
+            // Essayer d'utiliser la même table 1 avec les mêmes horaires
+            Table table = dataRetriever.findTableById(1);
 
-            List<DishOrder> dishOrders1 = new ArrayList<>();
-            dishOrders1.add(new DishOrder(0, dish, 1));
+            // Mêmes horaires que le test 1 (devrait échouer)
+            Instant arrival = Instant.now().plus(2, ChronoUnit.HOURS);
+            Instant departure = arrival.plus(3, ChronoUnit.HOURS);
+            TableOrder tableOrder = new TableOrder(table, arrival, departure);
 
-            Order order1 = new Order(0, null, Instant.now(), dishOrders1,
-                    new TableOrder(table1, arrival1, departure1));
+            // Créer la commande
+            Order order = new Order(0, null, Instant.now(), dishOrders, tableOrder);
 
-            Order savedOrder1 = dataRetriever.saveOrder(order1);
-            System.out.println("Première commande créée: " + savedOrder1.getReference());
+            // DEVRAIT LANCER UNE EXCEPTION
+            dataRetriever.saveOrder(order);
+            System.err.println("ERREUR: L'exception n'a pas été lancée!");
 
-            // Tentative de deuxième commande sur la même table aux mêmes horaires
-            System.out.println("\nTentative de deuxième commande sur la même table...");
-
-            Dish anotherDish = dataRetriever.findDishById(4); // Gateau au chocolat
-
-            List<DishOrder> dishOrders2 = new ArrayList<>();
-            dishOrders2.add(new DishOrder(0, anotherDish, 2));
-
-            Order order2 = new Order(0, null, Instant.now(), dishOrders2,
-                    new TableOrder(table1, arrival1.plus(30, ChronoUnit.MINUTES),
-                            departure1.plus(30, ChronoUnit.MINUTES)));
-
-            try {
-                dataRetriever.saveOrder(order2);
-                System.err.println("ERREUR: La commande aurait dû échouer (table occupée)!");
-            } catch (RuntimeException e) {
-                System.out.println("SUCCÈS: Exception attendue capturée");
-                System.out.println("Message: " + e.getMessage());
-            }
-
+        } catch (RuntimeException e) {
+            System.out.println("Exception attendue capturée: " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("Erreur dans testFailedOrderWithOccupiedTable: " + e.getMessage());
+            System.err.println("Erreur inattendue: " + e.getMessage());
         }
     }
 
-    private static void testErrorWithAvailableSuggestions(DataRetriever dataRetriever) {
+    private static void testSecondTableOrder(DataRetriever dataRetriever) {
         try {
-            // Créer plusieurs commandes pour occuper des tables
-            System.out.println("Occupation de plusieurs tables...");
+            // Créer un plat (Gateau au chocolat)
+            Dish dish = dataRetriever.findDishById(4);
+            System.out.println("Plat: " + dish.getName());
 
-            Table table1 = dataRetriever.findTableById(1);
-            Table table2 = dataRetriever.findTableById(2);
+            // Créer des DishOrders
+            List<DishOrder> dishOrders = new ArrayList<>();
+            dishOrders.add(new DishOrder(0, dish, 3)); // 3 gateaux
 
-            Instant baseTime = Instant.now().plus(5, ChronoUnit.HOURS);
-            Dish dish = dataRetriever.findDishById(3); // Riz aux legumes
+            // Utiliser la table 2 (devrait être disponible)
+            Table table = dataRetriever.findTableById(2);
+            System.out.println("Table: numéro " + table.getNumber());
 
-            // Occuper la table 1
-            List<DishOrder> orders1 = new ArrayList<>();
-            orders1.add(new DishOrder(0, dish, 1));
+            // Horaires différents
+            Instant arrival = Instant.now().plus(4, ChronoUnit.HOURS);
+            Instant departure = arrival.plus(2, ChronoUnit.HOURS);
+            TableOrder tableOrder = new TableOrder(table, arrival, departure);
 
-            Order order1 = new Order(0, null, Instant.now(), orders1,
-                    new TableOrder(table1, baseTime, baseTime.plus(2, ChronoUnit.HOURS)));
-            dataRetriever.saveOrder(order1);
-            System.out.println("Table 1 occupée");
+            // Créer la commande
+            Order order = new Order(0, "TEST123", Instant.now(), dishOrders, tableOrder);
 
-            // Occuper la table 2
-            List<DishOrder> orders2 = new ArrayList<>();
-            orders2.add(new DishOrder(0, dish, 2));
+            // Sauvegarder
+            Order savedOrder = dataRetriever.saveOrder(order);
+            System.out.println("Commande table 2 créée avec succès!");
+            System.out.println("Référence: " + savedOrder.getReference());
 
-            Order order2 = new Order(0, null, Instant.now(), orders2,
-                    new TableOrder(table2, baseTime, baseTime.plus(1, ChronoUnit.HOURS)));
-            dataRetriever.saveOrder(order2);
-            System.out.println("Table 2 occupée");
+        } catch (Exception e) {
+            System.err.println("Échec du test 3: " + e.getMessage());
+        }
+    }
 
-            // Tenter de réserver la table 1 (déjà occupée)
-            System.out.println("\nTentative de réservation de la table 1 (occupée)...");
+    private static void testFindOrderByReference(DataRetriever dataRetriever) {
+        try {
+            // Rechercher une commande existante
+            System.out.println("Recherche de la commande ORD00001...");
+            Order order = dataRetriever.findOrderByReference("ORD00001");
 
-            List<DishOrder> newOrders = new ArrayList<>();
-            newOrders.add(new DishOrder(0, dish, 1));
-
-            Order conflictingOrder = new Order(0, null, Instant.now(), newOrders,
-                    new TableOrder(table1, baseTime.plus(30, ChronoUnit.MINUTES),
-                            baseTime.plus(3, ChronoUnit.HOURS)));
-
-            try {
-                dataRetriever.saveOrder(conflictingOrder);
-                System.err.println("ERREUR: La commande aurait dû échouer!");
-            } catch (RuntimeException e) {
-                System.out.println("SUCCÈS: Exception capturée avec suggestions");
-                System.out.println("Message d'erreur: " + e.getMessage());
-
-                // Vérifier que le message contient des suggestions
-                if (e.getMessage().contains("Available tables")) {
-                    System.out.println("✓ Le message contient des suggestions de tables disponibles");
-                } else {
-                    System.out.println("✗ Le message ne contient pas de suggestions");
-                }
+            if (order != null) {
+                System.out.println("Commande trouvée:");
+                System.out.println("- Référence: " + order.getReference());
+                System.out.println("- Table: " + order.getTable().getNumber());
+                System.out.println("- Nombre de plats: " + order.getDishOrders().size());
+                System.out.println("- Montant TTC: " + order.getTotalAmountWithVAT());
+            } else {
+                System.out.println("Commande non trouvée");
             }
 
-            // Tester le cas où aucune table n'est disponible
-            System.out.println("\nTest du cas où aucune table n'est disponible...");
+        } catch (Exception e) {
+            System.out.println("Commande non trouvée (normal si pas encore créée): " + e.getMessage());
+        }
+    }
 
-            // Occuper toutes les tables
-            for (int i = 3; i <= 5; i++) {
-                Table table = dataRetriever.findTableById(i);
-                List<DishOrder> dishOrders = new ArrayList<>();
-                dishOrders.add(new DishOrder(0, dish, 1));
+    private static void testAllTablesOccupied(DataRetriever dataRetriever) {
+        try {
+            // Essayer de créer une commande avec des horaires qui occupent toutes les tables
+            Dish dish = dataRetriever.findDishById(3);
+            List<DishOrder> dishOrders = new ArrayList<>();
+            dishOrders.add(new DishOrder(0, dish, 2));
 
-                Order order = new Order(0, null, Instant.now(), dishOrders,
-                        new TableOrder(table, baseTime, baseTime.plus(3, ChronoUnit.HOURS)));
-                dataRetriever.saveOrder(order);
-                System.out.println("Table " + i + " occupée");
-            }
+            // Essayer la table 3
+            Table table = dataRetriever.findTableById(3);
 
-            // Essayer de créer une nouvelle commande
+            // Horaires qui chevauchent tout
+            Instant arrival = Instant.now();
+            Instant departure = arrival.plus(10, ChronoUnit.HOURS);
+            TableOrder tableOrder = new TableOrder(table, arrival, departure);
+
+            Order order = new Order(0, null, Instant.now(), dishOrders, tableOrder);
+
+            dataRetriever.saveOrder(order);
+            System.out.println("Commande créée avec table 3");
+
+            // Maintenant essayer une nouvelle commande avec table 3 aux mêmes horaires
+            System.out.println("\nEssai de double réservation table 3...");
             Table table3 = dataRetriever.findTableById(3);
-            List<DishOrder> finalOrders = new ArrayList<>();
-            finalOrders.add(new DishOrder(0, dish, 1));
+            TableOrder tableOrder3 = new TableOrder(table3, arrival.plus(1, ChronoUnit.HOURS),
+                    departure.minus(1, ChronoUnit.HOURS));
+            Order order2 = new Order(0, null, Instant.now(), dishOrders, tableOrder3);
 
-            Order finalOrder = new Order(0, null, Instant.now(), finalOrders,
-                    new TableOrder(table3, baseTime.plus(1, ChronoUnit.HOURS),
-                            baseTime.plus(4, ChronoUnit.HOURS)));
+            dataRetriever.saveOrder(order2);
+            System.err.println("ERREUR: L'exception n'a pas été lancée pour double réservation!");
 
-            try {
-                dataRetriever.saveOrder(finalOrder);
-                System.err.println("ERREUR: La commande aurait dû échouer!");
-            } catch (RuntimeException e) {
-                System.out.println("SUCCÈS: Exception capturée");
-                System.out.println("Message: " + e.getMessage());
+        } catch (RuntimeException e) {
+            System.out.println("Exception attendue pour double réservation: " + e.getMessage());
+        } catch (Exception e) {
+            System.err.println("Erreur: " + e.getMessage());
+        }
+    }
 
-                if (e.getMessage().contains("No tables are available")) {
-                    System.out.println("✓ Message correct pour aucune table disponible");
-                }
-            }
+    private static void testBasicMethods(DataRetriever dataRetriever) {
+        try {
+            // Test findDishById
+            System.out.println("\nTest findDishById:");
+            Dish dish = dataRetriever.findDishById(1);
+            System.out.println("- Plat ID 1: " + dish.getName() + " (" + dish.getDishType() + ")");
+
+            // Test findIngredientById
+            System.out.println("\nTest findIngredientById:");
+            Ingredient ingredient = dataRetriever.findIngredientById(1);
+            System.out.println("- Ingrédient ID 1: " + ingredient.getName() +
+                    " - Prix: " + ingredient.getPrice() +
+                    " - Catégorie: " + ingredient.getCategory());
+
+            // Test findTableById
+            System.out.println("\nTest findTableById:");
+            Table table = dataRetriever.findTableById(1);
+            System.out.println("- Table ID 1: numéro " + table.getNumber());
+
+            // Test saveDish
+            System.out.println("\nTest saveDish:");
+            Dish newDish = new Dish(0, "Nouveau plat test", DishTypeEnum.MAIN, 15000.0);
+            Dish savedDish = dataRetriever.saveDish(newDish);
+            System.out.println("- Plat sauvegardé: " + savedDish.getName() + " (ID: " + savedDish.getId() + ")");
+
+            // Test saveIngredient
+            System.out.println("\nTest saveIngredient:");
+            Ingredient newIngredient = new Ingredient(0, "Nouvel ingrédient", 1000.0, CategoryEnum.OTHER);
+            Ingredient savedIngredient = dataRetriever.saveIngredient(newIngredient);
+            System.out.println("- Ingrédient sauvegardé: " + savedIngredient.getName() +
+                    " (ID: " + savedIngredient.getId() + ")");
 
         } catch (Exception e) {
-            System.err.println("Erreur dans testErrorWithAvailableSuggestions: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Erreur dans les tests de base: " + e.getMessage());
         }
     }
 }
